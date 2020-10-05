@@ -2,7 +2,7 @@ library(shiny)
 
 fluidPage(
   
-  titlePanel("Smata"),
+  titlePanel("Smamta"),
   
   sidebarLayout(
     sidebarPanel(
