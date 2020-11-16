@@ -1,1 +1,1 @@
-helpers.installPackages("rvest", "tm", "SnowballC", "wordcloud")
+helpers.installPackages("tm", "wordcloud")

@@ -6,7 +6,8 @@ fluidPage(
   
   sidebarLayout(
     sidebarPanel(
-      textInput(inputId = "url", label = "Give URL")
+      textInput(inputId = "file", label = "Give file name"),
+      actionButton("button","Run")
     ),
     
     mainPanel(
