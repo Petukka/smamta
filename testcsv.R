@@ -2,12 +2,22 @@ rm(list = ls())
 
 library(tm)
 library(wordcloud)
+library(sjmisc)
 
 # filecsv <- read.csv("output202006.csv", stringsAsFactors = FALSE, sep="")
 
 filecsv <- readLines("output202006.csv")
 
+parsedfile <- c()
+
+for(i in filecsv){
+  if(str_contains(i, "horse") == TRUE) {
+    parsedfile <- c(parsedfile, i)
+  }
+}
+
 filecsv.vec <- VectorSource(filecsv)
+
 
 textcorpus <- VCorpus(filecsv.vec)
 
