@@ -6,12 +6,16 @@ fluidPage(
   
   sidebarLayout(
     sidebarPanel(
-      textInput(inputId = "file", label = "Give file name"),
-      actionButton("button","Run")
+      textInput(inputId = "word", label = "Give word:", ),
+      selectInput("file", "Select file:", c("output202006.csv" = "output202006.csv")),
+      actionButton("button", "Run")
     ),
     
     mainPanel(
-      plotOutput("wordcloud")
+      textOutput("textbox"),
+      textOutput("textbox2"),
+      plotOutput("topic"),
+      plotOutput("sentiment")
     )
     
   )
