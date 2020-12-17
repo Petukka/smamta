@@ -9,13 +9,13 @@ library(SentimentAnalysis)
 
 function(input, output) {
   
-  dtm <- function(){
-    filecsv <- readLines("output202006.csv")
+  dtm <- function(wordInput, fileInput){
+    filecsv <- readLines(fileInput)
     
     parsedfile <- c()
     
     for(i in filecsv){
-      if(str_contains(i, "horse") == TRUE) {
+      if(str_contains(i, wordInput) == TRUE) {
         parsedfile <- c(parsedfile, i)
       }
     }
@@ -42,9 +42,13 @@ function(input, output) {
     return(text_dtm)
   }
   
+  word <- eventReactive(input$button, {
+    input$word
+  })
+  
   output$topic <- renderPlot({
     
-    docuTerm <- dtm()
+    docuTerm <- dtm(word(), input$file)
     
     text_lda <- LDA(docuTerm, k = 2, control = list(seed = 1234))
     
@@ -70,7 +74,7 @@ function(input, output) {
 
   output$sentiment <- renderPlot({
     
-    docuTerm <- dtm()
+    docuTerm <- dtm(word(), input$file)
     
     sentimentscore <- table(convertToDirection(analyzeSentiment(docuTerm)$SentimentQDAP))
     plot(sentimentscore)
