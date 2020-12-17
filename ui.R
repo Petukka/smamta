@@ -12,9 +12,9 @@ fluidPage(
     ),
     
     mainPanel(
-      textOutput("textbox"),
-      textOutput("textbox2"),
+      textOutput("topicbox"),
       plotOutput("topic"),
+      textOutput("sentimentbox"),
       plotOutput("sentiment")
     )
     

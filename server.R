@@ -43,41 +43,66 @@ function(input, output) {
   }
   
   word <- eventReactive(input$button, {
-    input$word
+    if (nchar(input$word) < 3) {
+      return()
+    } else {
+      return(dtm(input$word, input$file))
+    }
   })
   
   output$topic <- renderPlot({
     
-    docuTerm <- dtm(word(), input$file)
-    
-    text_lda <- LDA(docuTerm, k = 2, control = list(seed = 1234))
-    
-    text_topics <- tidy(text_lda, matrix = "beta")
-    
-    text_top_terms <- text_topics %>%
-      group_by(topic) %>%
-      top_n(10, beta) %>%
-      ungroup() %>%
-      arrange(topic, -beta)
-    
-    text_top_terms %>%
-      mutate(term=reorder_within(term, beta, topic)) %>%
-      ggplot(aes(term, beta, fill = factor(topic))) +
-      geom_col(show.legend = FALSE) +
-      coord_flip() +
-      facet_wrap(~topic, scales = "free") +
-      scale_x_reordered() +
-      ggtitle("Top term-topic-probabilities")
-    
+    if(is.null(word())) {
+      return()
+    } else {
+      
+      text_lda <- LDA(word(), k = 2, control = list(seed = 1234))
+      
+      text_topics <- tidy(text_lda, matrix = "beta")
+      
+      text_top_terms <- text_topics %>%
+        group_by(topic) %>%
+        top_n(10, beta) %>%
+        ungroup() %>%
+        arrange(topic, -beta)
+      
+      text_top_terms %>%
+        mutate(term=reorder_within(term, beta, topic)) %>%
+        ggplot(aes(term, beta, fill = factor(topic))) +
+        geom_col(show.legend = FALSE) +
+        coord_flip() +
+        facet_wrap(~topic, scales = "free") +
+        scale_x_reordered() +
+        ggtitle("Top term-topic-probabilities")
+    }
     
   })
 
   output$sentiment <- renderPlot({
     
-    docuTerm <- dtm(word(), input$file)
-    
-    sentimentscore <- table(convertToDirection(analyzeSentiment(docuTerm)$SentimentQDAP))
-    plot(sentimentscore)
+    if(is.null(word())) {
+      return()
+    } else {
+      
+      sentimentscore <- table(convertToDirection(analyzeSentiment(word())$SentimentQDAP))
+      plot(sentimentscore)
+      
+    }
+  })
+  
+  output$topicbox <- renderText({
+    if(is.null(word())) {
+      "Wrong input"
+    }
+
+  })
+  
+  output$sentimentbox <- renderText({
+    if(is.null(word())) {
+      "Wrong input"
+    }
+
+
   })
 
 }
