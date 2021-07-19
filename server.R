@@ -56,7 +56,21 @@ function(input, output) {
       return()
     } else {
       
-      text_lda <- LDA(word(), k = 2, control = list(seed = 1234))
+      temp <- textProcessor(parsedfile, stem = TRUE, verbose = FALSE)
+      out <- prepDocuments(temp$documents, temp$vocab, verbose = FALSE)
+      
+      set.seed(5707363)
+      bestK <- searchK(out$documents, out$vocab, K = c(4:12), seed = 5707363, verbose = FALSE)
+      
+      bestKsearch <- data.frame(bestK$results$K, bestK$results$semcoh)
+      
+      colnames(bestKsearch) <- c("K", "semcohs")
+      
+      bestpickedK <- bestKsearch[which.max(bestKsearch$semcohs),]
+      
+      pick <- as.integer(bestpickedK$K)
+      
+      text_lda <- LDA(word(), k = pick, control = list(seed = 1234))
       
       text_topics <- tidy(text_lda, matrix = "beta")
       
