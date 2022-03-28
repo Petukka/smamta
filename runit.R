@@ -11,14 +11,33 @@ library(dplyr)
 library(SentimentAnalysis)
 library(stm)
 
-# filecsv <- read.csv("output202006.csv", stringsAsFactors = FALSE, sep="")
+filecsv <- readLines("data/output202001.csv")
 
-filecsv <- readLines("output202006.csv")
+filecsv <- append(filecsv, readLines("data/output202002.csv"))
+
+filecsv <- append(filecsv, readLines("data/output202003.csv"))
 
 parsedfile <- c()
 
+searchword <- c("smart city", 
+                "smart cities", 
+                "smartcity", 
+                "smartcities", 
+                "Smart city", 
+                "Smart cities", 
+                "Smartcity", 
+                "Smartcities", 
+                "Smart City", 
+                "Smart Cities",
+                "SmartCity",
+                "SmartCities",
+                "smart City",
+                "smart Cities",
+                "smartCity",
+                "smartCities")
+
 for(i in filecsv){
-  if(str_contains(i, "house") == TRUE) {
+  if(str_contains(i, searchword, logic = "or") == TRUE) {
     parsedfile <- c(parsedfile, i)
   }
 }
@@ -54,9 +73,15 @@ bestpickedK <- bestKsearch[which.max(bestKsearch$semcohs),]
 
 pick <- as.integer(bestpickedK$K)
 
-wordcloud(textcorpus, max.words = 150)
-
 text_dtm <- DocumentTermMatrix(textcorpus)
+
+#
+#
+#
+#       Topic model
+#
+#
+#
 
 text_lda <- LDA(text_dtm, k = pick, control = list(seed = 1234))
 
@@ -77,17 +102,22 @@ text_top_terms %>%
   scale_x_reordered() +
   ggtitle("Top term-topic-probabilities")
 
+topicframe <- data.frame(text_top_terms)
+
+write.csv2(topicframe, "outputtopic.csv", row.names = FALSE)
+
+
+#
+#
+#
+#       Sentiment analysis
+#
+#
+#
 
 sentimentscore <- table(convertToDirection(analyzeSentiment(text_dtm)$SentimentQDAP))
 
-plot(sentimentscore, lwd = 30)
-sentimentscore[2]
-
-output <- data.frame()
-
-output <- rbind(output, text_top_terms)
-
-write.csv2(output, "result.csv", row.names = FALSE)
+plot(sentimentscore)
 
 legend("topleft", legend = c("Negative", sentimentscore[1], "Neutral", sentimentscore[2], "Positive",  sentimentscore[3]))
 
@@ -95,10 +125,6 @@ positive <- c(sentimentscore[3])
 neutral <- c(sentimentscore[2])
 negative <- c(sentimentscore[1])
 
-data <- data.frame(positive, neutral, negative)
+sentimentframe <- data.frame(positive, neutral, negative)
 
-output <- c(output, data)
-
-output <- data.frame(output)
-
-write.table(data, "result.csv", append = TRUE, sep = ",", row.names = FALSE, quote = FALSE)
+write.csv2(sentimentframe, "outputsentiment.csv", row.names = FALSE)

@@ -6,19 +6,27 @@ library(tidytext)
 library(ggplot2)
 library(dplyr)
 library(SentimentAnalysis)
+library(stm)
 
 function(input, output) {
   
-  dtm <- function(wordInput, fileInput){
+  fileparsed <- function(wordInput, fileInput) {
     filecsv <- readLines(fileInput)
+    
+    searchword <- c(wordInput)
     
     parsedfile <- c()
     
     for(i in filecsv){
-      if(str_contains(i, wordInput) == TRUE) {
+      if(str_contains(i, searchword, logic = "or") == TRUE) {
         parsedfile <- c(parsedfile, i)
       }
     }
+    
+    return(parsedfile)
+  }
+  
+  dtm <- function(parsedfile){
     
     filecsv.vec <- VectorSource(parsedfile)
     
@@ -46,9 +54,13 @@ function(input, output) {
     if (nchar(input$word) < 3) {
       return()
     } else {
-      return(dtm(input$word, input$file))
+      
+      doneparsed <- fileparsed(input$word, input$file)
+      returnlist <- list("dtm" = dtm(doneparsed), "parsed" = doneparsed)
+      return(returnlist)
     }
   })
+  
   
   output$topic <- renderPlot({
     
@@ -56,7 +68,9 @@ function(input, output) {
       return()
     } else {
       
-      temp <- textProcessor(parsedfile, stem = TRUE, verbose = FALSE)
+      mylist <- word()
+      
+      temp <- textProcessor(mylist$parsed, stem = TRUE, verbose = FALSE)
       out <- prepDocuments(temp$documents, temp$vocab, verbose = FALSE)
       
       set.seed(5707363)
@@ -70,7 +84,7 @@ function(input, output) {
       
       pick <- as.integer(bestpickedK$K)
       
-      text_lda <- LDA(word(), k = pick, control = list(seed = 1234))
+      text_lda <- LDA(mylist$dtm, k = pick, control = list(seed = 1234))
       
       text_topics <- tidy(text_lda, matrix = "beta")
       
@@ -80,6 +94,10 @@ function(input, output) {
         ungroup() %>%
         arrange(topic, -beta)
       
+      topicframe <- data.frame(text_top_terms)
+      
+      write.csv2(topicframe, "outputtopic.csv", row.names = FALSE)
+      
       text_top_terms %>%
         mutate(term=reorder_within(term, beta, topic)) %>%
         ggplot(aes(term, beta, fill = factor(topic))) +
@@ -88,6 +106,7 @@ function(input, output) {
         facet_wrap(~topic, scales = "free") +
         scale_x_reordered() +
         ggtitle("Top term-topic-probabilities")
+      
     }
     
   })
@@ -98,8 +117,21 @@ function(input, output) {
       return()
     } else {
       
-      sentimentscore <- table(convertToDirection(analyzeSentiment(word())$SentimentQDAP))
+      mylist <- word()
+      
+      sentimentscore <- table(convertToDirection(analyzeSentiment(mylist$dtm)$SentimentQDAP))
+      
+      positive <- c(sentimentscore[3])
+      neutral <- c(sentimentscore[2])
+      negative <- c(sentimentscore[1])
+      
+      sentimentframe <- data.frame(positive, neutral, negative)
+      
+      write.csv2(sentimentframe, "outputsentiment.csv", row.names = FALSE)
+      
+      
       plot(sentimentscore)
+      legend("topleft", legend = c("Negative", sentimentscore[1], "Neutral", sentimentscore[2], "Positive",  sentimentscore[3]))
       
     }
   })
